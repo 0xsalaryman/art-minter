@@ -32,15 +32,42 @@
   }
 }
 
-h1 {
+/* Container */
+#top {
+  min-height: 100vh;
+  position: relative;
+  overflow: scroll;
+}
+
+/* Dropdown related styles */
+.dropdown-menu {
+  top: 80px !important;
+}
+
+.dropdown-content {
+  background-color: #363636 !important;
+}
+
+.dropdown-item {
   color: white;
 }
 
+.dropdown-content {
+  max-height: 14em;
+  overflow: auto;
+}
+
+.fa-angle-down {
+  color: #485fc7;
+}
+
+/* Navbar related styles */
 .navbar {
   background-color: #202227;
   background-image: none;
   height: 100px;
   padding-left: 20px !important;
+  width: 100%;
 }
 
 .navbar-item {
@@ -52,79 +79,50 @@ h1 {
   
 }
 
-.columns{
-  height: 50%;
+h1 {
   color: white;
 }
 
+/* Mint "Art" */
 .content h1{
   color: white !important;
+  font-size: 4em;
 }
 
-.container {
-  height: 100%;
-  margin: 5%;
+/* Column style */
+.columns{
+  margin: 0;
+  padding: 30px;
+  min-height: calc(100vh - 100px);
+  color: white;
 }
 
-#top {
-  min-height: 100vh;
+/* Drawing board */
+.is-three-fifths {
+  height: calc(100vh - 160px);
+  position: relative !important;
+  display: block;
+}
+
+#board {
+  background-color: rgb(241, 240, 240);
+  /* min-height: 250px; */
+  /* max-height: 80vh; */
+  height: calc(100vh - 250px);
+  border-radius: 5px;
+  display: block;
   overflow: hidden;
   position: relative;
+  /* transition: all 0.1s ease-out; */
 }
 
-#shapes {
-  background-color: rgb(241, 240, 240);
-  min-width: 400px;
-  min-height: 400px;
-  height: 40vw;
-  width: 40vw;
-  border-radius: 5px;
-  position:relative; 
-  overflow: hidden;
-  /* padding: 5px; */
-}
-
-#shapes2 {
-  position:  absolute;
-  top: 0;
-  left: 0;
-  bottom: 0;
-  right: 0;
-}
-
-#clickable {
+#loader {
   height: 100%;
   width: 100%;
   color:transparent;
-  position: absolute;
+  position: relative;
   top: 0;
   left: 0;
-}
-
-canvas{ 
-  position:absolute;
-  height: 100% !important;
-  width: 100% !important;
-  top:0;bottom:0;right:0;left:0; 
-  margin:auto; 
- } 
-
-.dropdown-menu {
-  top: 80px !important;
-}
-
-/* #image-container {
-  height: 100%;
-  display: flex;
-  overflow-y: hidden;
-} */
-
-.dropdown-content {
-  background-color: #363636 !important;
-}
-
-.dropdown-item {
-  color: white;
 }
 
 #init {
@@ -132,31 +130,27 @@ canvas{
   height: 100%;
   object-fit: cover;
   position: absolute;
+  top:0;left:0; 
   z-index: 1;
 }
 
+#artframe {
+  width:100%;
+  height: 100%;
+  position: absolute;
+  top:0;left:0; 
+  z-index: 1;
+}
+
+/* Generate button */
 #generate {
   margin-top: 10px;
-  min-width: 400px;
-  width: 40vw;
+  width: 100%;
   border-radius: 5px;
 }
 
-.select {
-  border-color: transparent;
-}
-
-select {
-  background-color:#363636 !important;
-  border-color: transparent !important;
-  color: white !important;
-}
-
+/* Metamask icon */
 #meta {
   height: 20px;
   width: 20px;
-}
-
-.fa-angle-down {
-  color: #485fc7;
 }
