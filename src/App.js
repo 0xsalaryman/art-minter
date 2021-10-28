@@ -1,17 +1,21 @@
 import 'bulma/css/bulma.min.css';
 import './App.css';
 
+
 import React from 'react';
 import p5 from 'p5';
 
 import { ethers } from 'ethers';
 import { getAlgo, algoList } from "./utils/dictionary.js";
 import { connectWallet, getCurrentWalletConnected, mintNFT, waitTx } from "./utils/interact.js";
+import { createMetadata, uploadMetadata, uploadFile } from './utils/pinata';
+import { create } from 'ipfs-http-client';
 
 import meta from './img/metamask.png';
 
-
-var $ = require( "jquery" );
+const fs = require('fs');
+const $ = require( "jquery" );
+const client = create('https://ipfs.infura.io:5001/api/v0')
 
 const App = () => {
 
@@ -149,7 +153,9 @@ const App = () => {
   // }
 
   // Function to save rendered canvas into image
-  function save() {
+  async function save() {
+    var minter = document.getElementById("mint")
+    minter.classList.toggle("is-loading");
     var iframe = document.getElementById("artframe");
     // let canvas = iframe.contentWindow.document.getElementById('defaultCanvas0')
     let canvases = iframe.contentWindow.document.getElementsByTagName('canvas')
@@ -157,12 +163,39 @@ const App = () => {
     // var element = iframe.contentWindow.document.getElementById('defaultCanvas0');
     // console.log(element)
     var dataURL = canvas.toDataURL()
-    // // console.log(dataURL)
-    saveAjax(dataURL, seed, "../tmp/")
+
+    // console.log(dataURL)
+    
+    // var location = await saveAjax(dataURL, seed, "../tmp/")
+    // console.log(location)
+    // const readableStreamForFile = fs.createReadStream(location);
+    // const added = await client.add(location)
+    const blob = dataURLtoBlob(dataURL)
+    // console.log(blob)
+    const file = new File([blob], "image.png", {
+      type: blob.type,
+    });
+    // console.log(file)
+    const url = await client.add(file)
+    // const streamFile = test(dataURL, "test.png")
+    // console.log(streamFile)
+    // var location = await saveAjax(dataURL, seed, "../tmp/")
+    // var url = uploadFile(test.stream(), "")
+    // console.log(url)
+    var metadata = createMetadata(algo, "#1", "ipfs://" + url.path, seed)
+
+    var hash = await uploadMetadata(metadata, "")
+    var tokenURI = "ipfs://" + hash.IpfsHash
+    minter.classList.toggle("is-loading");
+
+    // console.log(added)
+    // console.log(tokenURI)
+    /* upload the file */
+    // console.log(hash)
   }
 
-  function saveAjax(_data_url, _name, _location) {
-    $.ajax({
+  async function saveAjax(_data_url, _name, _location) {
+    var result = await $.ajax({
       type: "POST",
       url: "http://localhost:8000/php/script.php",
       data: { 
@@ -170,10 +203,26 @@ const App = () => {
           name: _name,
           location: _location
       }
-    }).done(function(o) {
-      console.log('saved'); 
-    });
+    })
+
+    return "./tmp/"+ _name + ".png"
   }
+
+  function dataURLtoBlob(dataurl) {
+    var arr = dataurl.split(','), mime = arr[0].match(/:(.*?);/)[1],
+        bstr = window.atob(arr[1]), n = bstr.length, u8arr = new Uint8Array(n);
+    while(n--){
+        u8arr[n] = bstr.charCodeAt(n);
+    }
+    return new Blob([u8arr], {type:mime});
+  }
+
+  // function test(dataUrl, filename) {
+  //   var blob = dataURLtoBlob(dataUrl);
+  //   var fd = new FormData();
+  //   fd.append("file", blob, filename);
+  //   return fd
+  // }
 
   // Helper function to resize artboard
   function resize() {
@@ -230,7 +279,7 @@ const App = () => {
           setLoad(-1)
           setCanvas(1)
           resize()
-          console.log(true)
+          // console.log(true)
         } 
         else if (iframe.contentWindow.document.querySelectorAll('svg').length) {
           clearInterval(checkExist);
