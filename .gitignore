@@ -2,3 +2,5 @@ node_modules
 README.md
 Default
 .env
+build
+.backup

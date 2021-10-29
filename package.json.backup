@@ -2,8 +2,8 @@
   "name": "nft-app",
   "version": "0.1.0",
   "private": true,
+  "homepage": "http://0xsalaryman.github.io/art-minter",
   "dependencies": {
-    "@alch/alchemy-web3": "^1.1.7",
     "@pinata/sdk": "^1.1.23",
     "@testing-library/jest-dom": "^5.14.1",
     "@testing-library/react": "^11.2.7",
@@ -24,7 +24,9 @@
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d build"
   },
   "eslintConfig": {
     "extends": [
@@ -43,5 +45,8 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "devDependencies": {
+    "gh-pages": "^3.2.3"
   }
 }

@@ -32,11 +32,29 @@
   }
 }
 
+#test {
+  margin: 0;
+  /* pad: 0; */
+  /* height: 100%; */
+  /* position: absolute; */
+  /* display: block; */
+  padding: 0;
+  min-height: 0;
+  color: white;
+  width: 100%;
+  display: flex;
+  align-items: center;
+}
+
+#title {
+  min-width: 400px;
+}
+
 /* Container */
 #top {
   min-height: 100vh;
   position: relative;
-  overflow: scroll;
+  /* overflow: scroll; */
 }
 
 /* Dropdown related styles */
@@ -87,6 +105,17 @@ h1 {
 .content h1{
   color: white !important;
   font-size: 4em;
+}
+
+#text {
+  padding: 30px;
+}
+
+#notif {
+  word-wrap: break-word;
+  font-size: 0.8em;
+  padding: 10px;
+  max-width: calc(1/2.5*100vh)
 }
 
 /* Column style */

@@ -22,16 +22,21 @@ const App = () => {
   // States for art generation
   
   const [imgScript, setImgScript] = React.useState("")
-  const [load, setLoad] = React.useState(1)
+  const [load, setLoad] = React.useState(0)
   const [canvas, setCanvas] = React.useState(0)
   const [algo, setAlgo] = React.useState("Chromie Squiggle")
   const [seed, setSeed] = React.useState("")
+  const [message, setMessage] = React.useState("")
   const algos = algoList()
   const metamask = "Connect Metamask"
 
-  React.useEffect(() => {
+  React.useEffect(async () => {
     toggleDropdown()
     globalToggleDropdown()
+    const {address, status} = await getCurrentWalletConnected();
+    
+    setWallet(address)
+    addWalletListener();
   }, []);
 
   React.useEffect(() => {
@@ -41,7 +46,7 @@ const App = () => {
   React.useEffect(() => {
     keyDown()
     selectDropdown()
-  }, [algo]);
+  }, [algo, load]);
 
 
   // States for wallet connection
@@ -49,25 +54,46 @@ const App = () => {
   const [status, setStatus] = React.useState("");
   const [button, setButton] = React.useState("");
 
-  React.useEffect(async () => { 
-    const {address, status} = await getCurrentWalletConnected();
-    setWallet(address)
-    // setStatus("Mint");
-    // setLoad("button") 
-    // if (address == "") {
-    //   setButton(true)
-    // } else {
-    //   setButton(false)
-    // }
-    // console.log(button)
+  // React.useEffect(async () => { 
+  //   const {address, status} = await getCurrentWalletConnected();
     
-    addWalletListener();
-  }, []);
+  //   setWallet(address)
+  //   console.log("heelo" + address)
+  //   // enableButton()
+  //   // setStatus("Mint");
+  //   // setLoad("button") 
+  //   // if (address == "") {
+  //   //   setButton(true)
+  //   // } else {
+  //   //   setButton(false)
+  //   // }
+  //   // console.log(button)
+    
+  //   addWalletListener();
+  // }, [imgScript]);
+
+
+  function enableButton() {
+    console.log(walletAddress)
+    console.log(document.querySelectorAll('iframe').length)
+    // if (walletAddress != "" && (document.querySelectorAll('iframe').length)) {
+    //   console.log("hello")
+    //   document.getElementById("mint").disabled = false
+    // } else {
+    //   document.getElementById("mint").disabled = true
+    // }
+  }
   
   const connectWalletPressed = async () => { 
     const walletResponse = await connectWallet();
 
     setWallet(walletResponse.address);
+    if (walletAddress != "" && (document.querySelectorAll('iframe').length)) {
+      console.log("hello")
+      // document.getElementById("mint").disabled = false
+    } else {
+      // document.getElementById("mint").disabled = true
+    }
     // if (walletResponse.address == "") {
     //   setButton(true)
     // } else {
@@ -81,16 +107,18 @@ const App = () => {
       window.ethereum.on("accountsChanged", (accounts) => {
         if (accounts.length > 0) {
           setWallet(accounts[0]);
+          enableButton()
           // setStatus("");
           // setButton(true)
         } else {
           setWallet("");
+          enableButton()
           // setStatus("");
           // setButton(false)
         }
       });
     }
-  }
+  } 
 
 
   // Generate new art when space or enter is pressed
@@ -154,7 +182,11 @@ const App = () => {
 
   // Function to save rendered canvas into image
   async function save() {
+    setLoad(1)
     var minter = document.getElementById("mint")
+    minter.disabled = true
+
+    var notif = document.getElementById("notif")
     minter.classList.toggle("is-loading");
     var iframe = document.getElementById("artframe");
     // let canvas = iframe.contentWindow.document.getElementById('defaultCanvas0')
@@ -186,27 +218,46 @@ const App = () => {
 
     var hash = await uploadMetadata(metadata, "")
     var tokenURI = "ipfs://" + hash.IpfsHash
+    
+    var result = await mintNFT(tokenURI)
     minter.classList.toggle("is-loading");
+    if (result.success) {
+      notif.classList.add("is-success")
+      const result = await waitTx(result.status)
+    } else {
+      notif.classList.add("is-danger")
+    }
+    notif.setAttribute("style",`display: block`)
 
+    setMessage("Transaction Hash: "+result.status)
+    // setMessage("Image Uploaded: https://ipfs.io/ipfs/")
+    
     // console.log(added)
     // console.log(tokenURI)
     /* upload the file */
     // console.log(hash)
+    minter.disabled = false
+    setLoad(0)
   }
 
-  async function saveAjax(_data_url, _name, _location) {
-    var result = await $.ajax({
-      type: "POST",
-      url: "http://localhost:8000/php/script.php",
-      data: { 
-          data_url: _data_url,
-          name: _name,
-          location: _location
-      }
-    })
-
-    return "./tmp/"+ _name + ".png"
+  function delNotif() {
+    var notif = document.getElementById("notif")
+    notif.setAttribute("style",`display: none`)
   }
+
+  // async function saveAjax(_data_url, _name, _location) {
+  //   var result = await $.ajax({
+  //     type: "POST",
+  //     url: "http://localhost:8000/php/script.php",
+  //     data: { 
+  //         data_url: _data_url,
+  //         name: _name,
+  //         location: _location
+  //     }
+  //   })
+
+  //   return "./tmp/"+ _name + ".png"
+  // }
 
   function dataURLtoBlob(dataurl) {
     var arr = dataurl.split(','), mime = arr[0].match(/:(.*?);/)[1],
@@ -227,6 +278,7 @@ const App = () => {
   // Helper function to resize artboard
   function resize() {
     var iframe = document.getElementById("artframe");
+    console.log(iframe.contentWindow.location.href)
     // let canvas = iframe.contentWindow.document.getElementById('defaultCanvas0')
     let canvases = iframe.contentWindow.document.getElementsByTagName('canvas')
     if (canvases.length > 0) {
@@ -271,24 +323,29 @@ const App = () => {
   // Helper function to wait for iframe to render
   function waitForCanvas(){
     var iframe = document.getElementById("artframe");
+    console.log(iframe.contentWindow.location.href)
     var checkExist = setInterval(function() {
       
         // if (iframe.contentWindow.document.querySelectorAll('#defaultCanvas0').length) {
         if (iframe.contentWindow.document.querySelectorAll('canvas').length) {
           clearInterval(checkExist);
-          setLoad(-1)
+          // setLoad(-1)
           setCanvas(1)
           resize()
           // console.log(true)
         } 
         else if (iframe.contentWindow.document.querySelectorAll('svg').length) {
           clearInterval(checkExist);
-          setLoad(-1)
+          // setLoad(-1)
           setCanvas(1)
           resize()
         } 
     }, 100);
-    document.getElementById("mint").removeAttribute("disabled")
+    console.log(walletAddress)
+    enableButton()
+    // if (walletAddress != "") {
+    //   document.getElementById("mint").removeAttribute("disabled")
+    // }
   }
 
   // Resize art board when window is resized
@@ -345,7 +402,7 @@ const App = () => {
         scrolling="no"
         frameBorder={0}
         allowFullScreen
-        sandbox="allow-scripts"
+        sandbox="allow-scripts allow-same-origin"
         allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" 
         onLoad={waitForCanvas}
     >
@@ -355,22 +412,65 @@ const App = () => {
 
   // Generate new art
   function generate() {
-    setLoad(1)
-    let algorithm = getAlgo(algo)
+    if (load == 0) {
+      let algorithm = getAlgo(algo)
 
-    let seed = generateSeed()
-    setSeed(seed)
-
-    let imgScript = composeImgScript(seed, algorithm)
-    let iFrame = composeIframe(imgScript)
-    setImgScript(iFrame)
-    // waitForCanvas()
+      let seed = generateSeed()
+      setSeed(seed)
+  
+      let imgScript = composeImgScript(seed, algorithm)
+      let iFrame = composeIframe(imgScript)
+      setImgScript(iFrame)
+      // waitForCanvas()
+    }
   }
 
   //Return app layout
   return (
     <div id="top" style={{backgroundColor: "#282c34"}}>
         <nav class="navbar is-transparent" role="navigation" aria-label="main navigation">
+          {/* <div class="columns" id="test">
+            <div class="column">
+              <h1><b>[ ART-MINTER ]</b></h1>
+            </div>
+            <div class="column">
+              <div class="buttons">
+                <a class="button is-light is-dark" onClick={connectWalletPressed}>
+                {walletAddress.length > 0 ? (
+                  "Connected: " +
+                  String(walletAddress).substring(0, 6) +
+                  "..." +
+                  String(walletAddress).substring(38)
+                ) : ("Connect Metamask \u00A0"
+                )}
+                {walletAddress.length > 0 ? ("") : (<img id='meta' src={meta}/>)}
+                </a>
+              </div>
+            </div>
+            <div class="dropdown column" id="algo">
+              <div class="dropdown-trigger">
+                <button class="button is-dark" aria-haspopup="true" aria-controls="dropdown-menu">
+                  <span>{algo}</span>
+                  <span class="icon is-small">
+                    <i class="fas fa-angle-down" aria-hidden="true"></i>
+                  </span>
+                </button>
+              </div>
+              <div class="dropdown-menu" id="dropdown-menu" role="menu">
+                <div class="dropdown-content">
+                  {algos.map(function (x, i) { 
+                    return (
+                      <a class="dropdown-item">
+                        {x}
+                      </a>
+                    )
+                  })}
+      
+                </div>
+              </div>
+            </div>
+          </div>
+           */}
           <div class="navbar-brand">
             <a class="navbar-item" href="">
               <h1><b>[ ART-MINTER ]</b></h1>
@@ -416,11 +516,32 @@ const App = () => {
           </div>
         
         </nav>
-        <div class="columns is-vcentered">
-          <div class="column">
+        {/* <div class="columns" id="test">
+            <div class="column" id="title">
+              <h1><b>[ ART-MINTER ]</b></h1>
+            </div>
+            <div class="column">
+              <div class="buttons">
+                <a class="button is-light is-dark" onClick={connectWalletPressed}>
+                {walletAddress.length > 0 ? (
+                  "Connected: " +
+                  String(walletAddress).substring(0, 6) +
+                  "..." +
+                  String(walletAddress).substring(38)
+                ) : ("Connect Metamask \u00A0"
+                )}
+                {walletAddress.length > 0 ? ("") : (<img id='meta' src={meta}/>)}
+                </a>
+              </div>
+            </div>
+            
+            
+        </div> */}
+        <div class="columns">
+          <div class="column" id="text">
             <div class="content">
               <h1>Mint "Art".</h1>
-              <br/>
+              
               <p>How it works:</p>
               <ol>
                 <li>Select algorithm</li>
@@ -428,9 +549,15 @@ const App = () => {
                 <li>Mint if you find something you like</li>
               </ol>
             </div>
-            <a  id="mint" class="button is-info" disabled={true} onClick={save}>
-              Upload
-            </a>
+            <div class="buttons">
+              <button id="mint" class="button is-info is-rounded" onClick={save}>
+                Mint (0.05 ETH)
+              </button>
+            </div>
+            <div class="notification" style={{display: "none"}} id="notif">
+              <button class="delete" onClick={delNotif}></button>
+              {message}
+            </div>
           </div>
           <div class="column is-two-thirds" id="container">
             <div id="board" class="art">
