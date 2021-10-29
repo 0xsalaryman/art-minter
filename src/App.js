@@ -60,7 +60,6 @@ const App = () => {
   //   setWallet(address)
   //   console.log("heelo" + address)
   //   // enableButton()
-  //   // setStatus("Mint");
   //   // setLoad("button") 
   //   // if (address == "") {
   //   //   setButton(true)
